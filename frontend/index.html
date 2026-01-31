@@ -8,7 +8,7 @@
 
   <script>
     function callApi() {
-      fetch("http://localhost:3000/api/hello")
+      fetch("http://13.60.29.210:3000/api/hello")
         .then(r => r.json())
         .then(d => document.getElementById("out").innerText = d.message);
     }

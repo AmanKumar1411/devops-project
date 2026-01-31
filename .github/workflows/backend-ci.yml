@@ -1,4 +1,4 @@
-name: Backend CI - Build & Push to ECR
+name: Backend CI – Build & Push to ECR
 
 on:
   push:

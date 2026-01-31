@@ -1,8 +1,8 @@
-name: Backend CD - Deploy to EC2
+name: Backend CD – Deploy to EC2
 
 on:
   workflow_run:
-    workflows: ["Backend CI - Build & Push to ECR"]
+    workflows: ["Backend CI – Build & Push to ECR"]
     types:
       - completed
 
@@ -21,8 +21,14 @@ jobs:
       - name: Deploy on EC2
         run: |
           ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            aws ecr get-login-password --region ap-south-1 \
+            | docker login --username AWS \
+            --password-stdin 455162169324.dkr.ecr.ap-south-1.amazonaws.com
+
             docker pull 455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+
             docker rm -f backend || true
+
             docker run -d \
               --name backend \
               -p 3000:3000 \
