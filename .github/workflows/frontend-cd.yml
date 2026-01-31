@@ -16,6 +16,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate Secrets
+        run: |
+          if [ -z "${{ secrets.EC2_USER }}" ]; then
+            echo "Error: EC2_USER is not set in GitHub Secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.EC2_PUBLIC_IP }}" ]; then
+            echo "Error: EC2_PUBLIC_IP is not set in GitHub Secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
+            echo "Error: EC2_SSH_KEY is not set in GitHub Secrets."
+            exit 1
+          fi
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
