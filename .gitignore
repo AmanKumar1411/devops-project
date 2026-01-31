@@ -1,1 +1,23 @@
+# Credentials and Keys
 devops-project-key-v3
+*.pem
+.env
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# System
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
