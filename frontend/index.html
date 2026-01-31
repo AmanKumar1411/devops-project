@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+  <h1>Frontend</h1>
+  <button onclick="callApi()">Call Backend</button>
+  <p id="out"></p>
+
+  <script>
+    function callApi() {
+      fetch("http://localhost:3000/api/hello")
+        .then(r => r.json())
+        .then(d => document.getElementById("out").innerText = d.message);
+    }
+  </script>
+</body>
+
+</html>

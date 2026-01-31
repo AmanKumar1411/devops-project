@@ -1,0 +1,12 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node server.js & sleep 2 && curl -f http://localhost:3000/api/hello"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
