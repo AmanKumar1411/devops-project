@@ -1,0 +1,28 @@
+name: CI Pipeline (Shell Based)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Build (shell)
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/build.sh
+
+      - name: Test (shell)
+        run: |
+          ./scripts/test.sh
