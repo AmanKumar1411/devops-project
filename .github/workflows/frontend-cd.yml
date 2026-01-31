@@ -1,0 +1,30 @@
+name: Frontend CD - Deploy to EC2
+
+on:
+  workflow_run:
+    workflows: ["Frontend CI - Build & Push to ECR"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend on EC2
+        run: |
+          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            docker pull 455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+            docker rm -f frontend || true
+            docker run -d \
+              --name frontend \
+              -p 80:80 \
+              455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+          EOF
