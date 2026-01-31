@@ -39,4 +39,4 @@ jobs:
             --platform linux/amd64,linux/arm64 \
             -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }} \
             --push \
-            backend
+            ./backend
