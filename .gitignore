@@ -1,6 +1,6 @@
 # Credentials and Keys
-devops-project-key-v3
 *.pem
+*.key
 .env
 
 # Dependencies

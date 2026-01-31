@@ -1,10 +1,15 @@
-name: Backend CD – Deploy to EC2
+name: Backend CD - Deploy to EC2
 
 on:
   workflow_run:
-    workflows: ["Backend CI – Build & Push to ECR"]
+    workflows: ["Backend CI - Build & Push to ECR"]
     types:
       - completed
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPO: devops-backend
+  IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
 
 jobs:
   deploy:
@@ -18,19 +23,18 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
 
-      - name: Deploy on EC2
+      - name: Deploy Backend on EC2
         run: |
-          ssh ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
-            aws ecr get-login-password --region ap-south-1 \
-            | docker login --username AWS \
-            --password-stdin 455162169324.dkr.ecr.ap-south-1.amazonaws.com
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_PUBLIC_IP }} << EOF
+            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin \
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-            docker pull 455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
 
             docker rm -f backend || true
 
             docker run -d \
               --name backend \
               -p 3000:3000 \
-              455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
           EOF
