@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: 
 
 env:
   AWS_REGION: ap-south-1
@@ -38,15 +38,8 @@ jobs:
             --region ${{ env.AWS_REGION }}
 
       # 🔐 Login to ECR
-      - name: Explicit ECR Docker login
-        run: |
-          ACCOUNT_ID=$(echo "${{ secrets.AWS_ACCOUNT_ID }}" | tr -d '[:space:]')
-          aws ecr get-login-password --region ap-south-1 \
-            | docker login \
-                --username AWS \
-                --password-stdin \
-                $ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
-
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
       # 🧪 Minimal docker push (NO BUILDX)
       - name: Smoke test ECR push
