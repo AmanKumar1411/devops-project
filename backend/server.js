@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 
 app.get("/api/hello", (req, res) => {
-  res.json({ message: "Hello from backend V1" });
+  res.json({ message: "Hello from backend" });
 });
 
 app.listen(3000, () => {
