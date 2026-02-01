@@ -1,18 +1,19 @@
-name: Backend CI - DEBUG ECR Login
+name: Backend CI - Build & Push to ECR
 
 on:
   push:
+    paths:
+      - backend/**
     branches:
       - main
-  workflow_dispatch: 
 
 env:
   AWS_REGION: ap-south-1
   ECR_REPO: devops-backend
-  IMAGE_TAG: debug-test
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  debug:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,27 +27,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 🔍 WHO AM I (MOST IMPORTANT STEP)
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
-
-      # 🔍 Can I see the repo?
-      - name: Describe ECR repo
+      # ✅ Explicit login (THIS FIXES THE ERROR)
+      - name: Login to Amazon ECR
         run: |
-          aws ecr describe-repositories \
-            --repository-names ${{ env.ECR_REPO }} \
-            --region ${{ env.AWS_REGION }}
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login \
+            --username AWS \
+            --password-stdin \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-      # 🔐 Login to ECR
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
 
-      # 🧪 Minimal docker push (NO BUILDX)
-      - name: Smoke test ECR push
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Backend Image (Multi-Arch)
         run: |
-          ACCOUNT_ID=$(echo "${{ secrets.AWS_ACCOUNT_ID }}" | tr -d '[:space:]')
-          REGISTRY="$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
-
-          docker pull alpine:3.19
-          docker tag alpine:3.19 $REGISTRY/${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }}
-          docker push $REGISTRY/${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }}
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --push \
+            -t "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }}" \
+            ./backend
