@@ -28,15 +28,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ✅ Explicit login (THIS FIXES THE ERROR)
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION \
-          | docker login \
-            --username AWS \
-            --password-stdin \
-            455162169324.dkr.ecr.ap-south-1.amazonaws.com
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
