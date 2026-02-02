@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: ap-south-1
-  ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
 jobs:
   deploy:
@@ -25,18 +25,18 @@ jobs:
               ${{ secrets.EC2_USER }}@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             aws ecr get-login-password --region ap-south-1 \
             | docker login --username AWS \
-              --password-stdin ${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
+              --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
 
-            docker pull ${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
-            docker pull ${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
 
             docker rm -f backend frontend || true
 
             docker run -d --restart unless-stopped \
               --name backend -p 3000:3000 \
-              ${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+              ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
 
             docker run -d --restart unless-stopped \
               --name frontend -p 80:80 \
-              ${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+              ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
           EOF
