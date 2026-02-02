@@ -38,7 +38,7 @@ jobs:
           | docker login \
             --username AWS \
             --password-stdin \
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            455162169324.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
