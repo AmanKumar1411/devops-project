@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 
 app.get("/api/hello", (req, res) => {
-  res.json({ message: "Testing CI" });
+  res.json({ message: "Testing CI and CD" });
 });
 
 app.listen(3000, () => {
