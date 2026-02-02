@@ -30,7 +30,12 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            docker login \
+            --username AWS \
+            --password-stdin \
+            455162169324.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
