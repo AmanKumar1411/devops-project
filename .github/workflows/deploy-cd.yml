@@ -25,18 +25,18 @@ jobs:
               ${{ secrets.EC2_USER }}@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             aws ecr get-login-password --region ap-south-1 \
             | docker login --username AWS \
-              --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
+              --password-stdin 455162169324.dkr.ecr.ap-south-1.amazonaws.com
 
-            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
-            docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+            docker pull 455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+            docker pull 455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
 
             docker rm -f backend frontend || true
 
             docker run -d --restart unless-stopped \
               --name backend -p 3000:3000 \
-              ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
+              455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-backend:latest
 
             docker run -d --restart unless-stopped \
               --name frontend -p 80:80 \
-              ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
+              455162169324.dkr.ecr.ap-south-1.amazonaws.com/devops-frontend:latest
           EOF
