@@ -56,5 +56,5 @@ jobs:
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --push \
-            -t "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }}" \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
             ./backend
