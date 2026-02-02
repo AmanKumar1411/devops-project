@@ -2,15 +2,20 @@
 <html>
 
 <body>
-  <h1>Frontend Testing</h1>
+  <h1>Frontend</h1>
   <button onclick="callApi()">Call Backend</button>
   <p id="out"></p>
 
   <script>
     function callApi() {
-      fetch("http://13.60.29.210:3000/api/hello")
-        .then(r => r.json())
-        .then(d => document.getElementById("out").innerText = d.message);
+      fetch("http://localhost:3000/api/hello")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("out").innerText = data.message;
+        })
+        .catch(() => {
+          document.getElementById("out").innerText = "Backend not reachable";
+        });
     }
   </script>
 </body>
