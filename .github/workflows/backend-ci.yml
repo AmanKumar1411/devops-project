@@ -27,9 +27,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: get caller identity 1
-        run: |
-          aws sts get-caller-identity
 
       # ✅ Explicit login (THIS FIXES THE ERROR)
       - name: Login to Amazon ECR
@@ -40,6 +37,10 @@ jobs:
             --password-stdin \
             455162169324.dkr.ecr.ap-south-1.amazonaws.com
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -47,6 +48,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build & Push Backend Image (Multi-Arch)
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: devops-backend
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
