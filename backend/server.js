@@ -5,7 +5,7 @@ const app = express();
 app.use(cors());
 
 app.get("/api/hello", (req, res) => {
-  res.json({ message: "Backend working clean start" });
+  res.json({ message: "Backend workflow testing" });
 });
 
 app.listen(3000, "0.0.0.0", () => {
