@@ -10,7 +10,7 @@ on:
 
 env:
   AWS_REGION: ap-south-1
-  AWS_ACCOUNT_ID: 455162169324
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
 jobs:
   deploy:
@@ -32,11 +32,11 @@ jobs:
             
             # 1. Login to ECR
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-            docker login --username AWS --password-stdin 455162169324.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
             # 2. Pull the latest images
-            docker pull 455162169324.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-backend:latest
-            docker pull 455162169324.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-frontend:latest
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-backend:latest
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-frontend:latest
 
             # 4. Run Backend
             docker run -d \
@@ -50,5 +50,5 @@ jobs:
               --name frontend \
               --restart unless-stopped \
               -p 80:80 \
-              455162169324.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-frontend:latest
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-frontend:latest
           EOF
