@@ -38,12 +38,13 @@ jobs:
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-backend:latest
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-frontend:latest
 
+
             # 4. Run Backend
             docker run -d \
               --name backend \
               --restart unless-stopped \
               -p 3000:3000 \
-              455162169324.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-backend:latest
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/devops-backend:latest
 
             # 5. Run Frontend
             docker run -d \
