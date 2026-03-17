@@ -1,0 +1,9 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static frontend for devops project",
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}
