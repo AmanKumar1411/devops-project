@@ -8,6 +8,20 @@
   --accent-hover: #0f4a42;
   --ok: #146c43;
   --error: #9f1239;
+  --border: #dde5ef;
+}
+
+body.theme-contrast {
+  --bg-a: #0f172a;
+  --bg-b: #1e293b;
+  --card: #111827;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #0ea5e9;
+  --accent-hover: #0284c7;
+  --ok: #22c55e;
+  --error: #f43f5e;
+  --border: #334155;
 }
 
 * {
@@ -38,6 +52,13 @@ body {
   animation: reveal 400ms ease-out;
 }
 
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
 .eyebrow {
   margin: 0;
   letter-spacing: 0.08em;
@@ -57,6 +78,30 @@ body {
   color: var(--muted);
 }
 
+.field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  background: transparent;
+  color: var(--text);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+}
+
 .action {
   border: 0;
   border-radius: 12px;
@@ -70,9 +115,26 @@ body {
     background 120ms ease;
 }
 
+.ghost {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
 .action:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
+}
+
+.toggle {
+  font-size: 0.9rem;
+  color: var(--muted);
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
 }
 
 .status {
@@ -80,6 +142,41 @@ body {
   padding: 0.8rem;
   border-radius: 10px;
   background: #f8fafc;
+}
+
+body.theme-contrast .status {
+  background: #0b1220;
+}
+
+.meta {
+  margin-top: 0.9rem;
+}
+
+.pill {
+  display: inline-flex;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.86rem;
+}
+
+.history {
+  margin-top: 1rem;
+}
+
+.history-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.history-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+
+.history-list li {
+  margin-bottom: 0.4rem;
 }
 
 .status.ok {

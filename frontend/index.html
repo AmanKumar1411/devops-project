@@ -1,27 +1,50 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DevOps Project Dashboard</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
 
-  <body>
-    <main class="page">
-      <section class="card">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevOps Project Dashboard</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="topbar">
         <p class="eyebrow">Frontend + Backend Integration</p>
-        <h1 class="title">System Health Dashboard</h1>
-        <p class="subtitle">
-          Click below to call the backend API and render the live response.
-        </p>
-        <button id="call-api-btn" class="action">Call Backend API</button>
-        <p id="status" class="status" aria-live="polite">
-          Waiting for action...
-        </p>
-      </section>
-    </main>
+        <button id="theme-toggle" class="ghost" type="button">Toggle Theme</button>
+      </div>
 
-    <script src="./app.js"></script>
-  </body>
+      <h1 class="title">System Health Dashboard</h1>
+      <p class="subtitle">Call backend APIs, monitor response latency, and track request history.</p>
+
+      <label class="field-label" for="api-base-input">API Base URL</label>
+      <input id="api-base-input" class="input" type="text" value="http://localhost:3000" />
+
+      <div class="controls">
+        <button id="call-api-btn" class="action" type="button">Call Backend API</button>
+        <button id="clear-history-btn" class="ghost" type="button">Clear History</button>
+        <label class="toggle" for="auto-refresh-toggle">
+          <input id="auto-refresh-toggle" type="checkbox" />
+          Auto refresh (10s)
+        </label>
+      </div>
+
+      <p id="status" class="status" aria-live="polite">Waiting for action...</p>
+
+      <div class="meta">
+        <span class="pill">Last latency: <strong id="latency">-</strong></span>
+      </div>
+
+      <section class="history">
+        <h2 class="history-title">Request History</h2>
+        <ul id="history-list" class="history-list"></ul>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+
 </html>

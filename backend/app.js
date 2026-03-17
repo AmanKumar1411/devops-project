@@ -7,6 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Backend is running. Try /api/hello");
+});
+
 app.get("/api/hello", (req, res) => {
   res.json({ message: getHelloMessage() });
 });
