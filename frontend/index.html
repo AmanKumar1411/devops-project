@@ -1,24 +1,27 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevOps Project Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
 
-<body>
-  <h1>Frontend</h1>
-  <p>Frontend Workflow Testing</p>
-  <button onclick="callApi()">Call Backend</button>
-  <p id="out"></p>
+  <body>
+    <main class="page">
+      <section class="card">
+        <p class="eyebrow">Frontend + Backend Integration</p>
+        <h1 class="title">System Health Dashboard</h1>
+        <p class="subtitle">
+          Click below to call the backend API and render the live response.
+        </p>
+        <button id="call-api-btn" class="action">Call Backend API</button>
+        <p id="status" class="status" aria-live="polite">
+          Waiting for action...
+        </p>
+      </section>
+    </main>
 
-  <script>
-    function callApi() {
-      fetch("http://localhost:3000/api/hello")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("out").innerText = data.message;
-        })
-        .catch(() => {
-          document.getElementById("out").innerText = "Backend not reachable";
-        });
-    }
-  </script>
-</body>
-
+    <script src="./app.js"></script>
+  </body>
 </html>

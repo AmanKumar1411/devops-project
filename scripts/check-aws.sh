@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "Checking AWS identity..."
 aws sts get-caller-identity

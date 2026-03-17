@@ -17,7 +17,7 @@ jobs:
     # Logic: Run if manually triggered OR if the triggering workflow was successful
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Setup SSH
         run: |
