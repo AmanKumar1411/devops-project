@@ -16,9 +16,12 @@ test.describe("DevOps Dashboard E2E", () => {
   test("loads backend message on button click", async ({ page }) => {
     await page.getByRole("button", { name: "Call Backend API" }).click();
 
-    await expect(page.getByText("Backend workflow testing")).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.locator("#status")).toContainText(
+      "Backend workflow testing",
+      {
+        timeout: 10000,
+      }
+    );
   });
 
   test("call button remains interactive", async ({ page }) => {

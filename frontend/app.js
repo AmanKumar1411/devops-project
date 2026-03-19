@@ -14,16 +14,16 @@ function toStatus(type, message) {
   return { type, message };
 }
 
-async function fetchHelloMessage(baseUrl) {
+async function requestJson(baseUrl, path, options = {}) {
   const start = performance.now();
-  const response = await fetch(`${baseUrl}/api/hello`);
+  const response = await fetch(`${baseUrl}${path}`, options);
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`);
   }
   const data = await response.json();
   const durationMs = Math.round(performance.now() - start);
   return {
-    message: data.message,
+    data,
     durationMs,
   };
 }
@@ -48,6 +48,10 @@ function renderLatency(element, durationMs) {
   element.textContent = String(durationMs);
 }
 
+function renderResponseOutput(element, payload) {
+  element.textContent = JSON.stringify(payload, null, 2);
+}
+
 function addHistoryItem(historyList, text) {
   const item = document.createElement("li");
   item.textContent = text;
@@ -63,28 +67,37 @@ function applyTheme(isContrast) {
 }
 
 function createApiRunner(elements) {
-  return async function runApiCall(sourceLabel) {
+  return async function runApiCall(sourceLabel, path, options = {}) {
     renderStatus(elements.status, toStatus("ok", "Loading response..."));
 
     const baseUrl = getApiBaseUrl(elements.apiBaseInput);
 
     try {
-      const result = await fetchHelloMessage(baseUrl);
-      renderStatus(elements.status, toStatus("ok", result.message));
+      const result = await requestJson(baseUrl, path, options);
+      const message =
+        typeof result.data.message === "string"
+          ? result.data.message
+          : `Success for ${path}`;
+
+      renderStatus(elements.status, toStatus("ok", message));
       renderLatency(elements.latency, result.durationMs);
+      renderResponseOutput(elements.responseOutput, result.data);
       addHistoryItem(
         elements.historyList,
-        `${nowLabel()} | ${sourceLabel} | ${baseUrl}/api/hello | ${result.durationMs}ms`
+        `${nowLabel()} | ${sourceLabel} | ${baseUrl}${path} | ${result.durationMs}ms`
       );
     } catch {
       renderStatus(
         elements.status,
-        toStatus("error", `Backend not reachable at ${baseUrl}/api/hello`)
+        toStatus("error", `Backend not reachable at ${baseUrl}${path}`)
       );
       renderLatency(elements.latency, "-");
+      renderResponseOutput(elements.responseOutput, {
+        error: `Request failed for ${baseUrl}${path}`,
+      });
       addHistoryItem(
         elements.historyList,
-        `${nowLabel()} | ${sourceLabel} | ${baseUrl}/api/hello | Request failed`
+        `${nowLabel()} | ${sourceLabel} | ${baseUrl}${path} | Request failed`
       );
     }
   };
@@ -100,13 +113,46 @@ function initializeUi() {
     historyList: document.getElementById("history-list"),
     latency: document.getElementById("latency"),
     themeToggle: document.getElementById("theme-toggle"),
+    healthButton: document.getElementById("health-btn"),
+    timeButton: document.getElementById("time-btn"),
+    productsButton: document.getElementById("products-btn"),
+    searchInput: document.getElementById("search-input"),
+    searchButton: document.getElementById("search-btn"),
+    echoInput: document.getElementById("echo-input"),
+    echoButton: document.getElementById("echo-btn"),
+    responseOutput: document.getElementById("response-output"),
   };
 
   const runApiCall = createApiRunner(elements);
   let refreshIntervalId = null;
 
   elements.button.addEventListener("click", () => {
-    runApiCall("manual");
+    runApiCall("manual", "/api/hello");
+  });
+
+  elements.healthButton.addEventListener("click", () => {
+    runApiCall("health", "/api/health");
+  });
+
+  elements.timeButton.addEventListener("click", () => {
+    runApiCall("time", "/api/time");
+  });
+
+  elements.productsButton.addEventListener("click", () => {
+    runApiCall("products", "/api/products");
+  });
+
+  elements.searchButton.addEventListener("click", () => {
+    const query = encodeURIComponent(elements.searchInput.value.trim());
+    runApiCall("search", `/api/products?search=${query}`);
+  });
+
+  elements.echoButton.addEventListener("click", () => {
+    runApiCall("echo", "/api/echo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: elements.echoInput.value.trim() || "ping" }),
+    });
   });
 
   elements.clearHistoryButton.addEventListener("click", () => {
@@ -116,9 +162,9 @@ function initializeUi() {
 
   elements.autoRefreshToggle.addEventListener("change", (event) => {
     if (event.target.checked) {
-      runApiCall("auto");
+      runApiCall("auto", "/api/hello");
       refreshIntervalId = setInterval(() => {
-        runApiCall("auto");
+        runApiCall("auto", "/api/hello");
       }, REFRESH_INTERVAL_MS);
       return;
     }
