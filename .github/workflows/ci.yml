@@ -34,6 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -42,20 +47,15 @@ jobs:
       - name: Install root dependencies
         run: npm install
 
-      - name: Install backend dependencies
-        run: npm install --prefix backend
-
-      - name: Run backend lint
-        run: npm run lint --prefix backend
-
       - name: Run frontend lint
         run: npm run lint:frontend
 
       - name: Run format checks
         run: npm run format:check
 
-      - name: Run unit + integration tests
-        run: npm test --prefix backend
+      - name: Run backend tests
+        run: go test ./...
+        working-directory: backend
 
   e2e:
     if: ${{ github.actor != 'dependabot[bot]' }}
@@ -64,6 +64,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -71,9 +76,6 @@ jobs:
 
       - name: Install root dependencies
         run: npm install
-
-      - name: Install backend dependencies
-        run: npm install --prefix backend
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

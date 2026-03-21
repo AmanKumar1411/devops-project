@@ -4,7 +4,7 @@ set -euo pipefail
 echo "=== TEST STEP ==="
 
 cd backend
-node server.js &
+go run . &
 SERVER_PID=$!
 
 cleanup() {
