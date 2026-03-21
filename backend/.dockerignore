@@ -1,0 +1,10 @@
+node_modules
+tests
+*.md
+*_test.go
+*.log
+.DS_Store
+.vscode
+.git
+.gitignore
+Dockerfile

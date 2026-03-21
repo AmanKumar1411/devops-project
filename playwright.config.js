@@ -8,7 +8,7 @@ module.exports = defineConfig({
   },
   webServer: [
     {
-      command: "npm start --prefix backend",
+      command: "cd backend && go run .",
       url: "http://127.0.0.1:3000/api/hello",
       reuseExistingServer: true,
       timeout: 60_000,

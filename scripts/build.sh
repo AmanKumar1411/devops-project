@@ -4,6 +4,7 @@ set -euo pipefail
 echo "=== BUILD STEP ==="
 
 cd backend
-npm install
+go mod tidy
+go build ./...
 
-echo "Backend dependencies installed"
+echo "Backend build completed"

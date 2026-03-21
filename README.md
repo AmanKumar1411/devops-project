@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- Backend: Node.js + Express API serving `GET /api/hello`
+- Backend: Go HTTP API serving `/api/hello`, `/api/health`, `/api/time`, `/api/products`, and `/api/echo`
 - Frontend: Responsive HTML/CSS/JS UI calling backend API from button action
 - CI/CD: GitHub Actions for quality gates, container image build, and EC2 deployment
 - Deployment target: AWS EC2 host pulling images from AWS ECR
@@ -20,10 +20,10 @@ Runs on both:
 
 Checks:
 
-- Install dependencies (`npm install` root + backend)
-- Lint (`eslint` backend + frontend JS)
+- Install root dependencies (`npm install`)
+- Lint frontend (`eslint` frontend JS)
 - Format checks (`prettier --check`)
-- Unit + integration tests (Jest)
+- Backend tests (`go test`)
 - E2E bonus test (Playwright)
 
 ### Container Build Workflows
@@ -59,17 +59,11 @@ Purpose:
 
 ## Testing Strategy
 
-### Unit Testing
+### Backend Testing
 
-- Tool: Jest
-- Example: `backend/tests/unit/message.test.js`
-- Validates isolated function behavior (`getHelloMessage`)
-
-### Integration Testing
-
-- Tool: Jest + Supertest
-- Example: `backend/tests/integration/hello-api.test.js`
-- Validates API wiring and response payload
+- Tool: Go test framework (`testing`, `httptest`)
+- Example: `backend/main_test.go`
+- Validates helper functions and API behavior for all routes
 
 ### E2E Testing (Bonus)
 
@@ -123,9 +117,9 @@ Improvements:
 
 ## Local Commands
 
-- Backend install: `npm install --prefix backend`
-- Backend lint: `npm run lint --prefix backend`
-- Backend tests: `npm test --prefix backend`
+- Backend dependencies: `go mod tidy` (inside `backend`)
+- Backend run: `go run ./backend`
+- Backend tests: `go test ./...` (inside `backend`)
 - Root install (frontend lint/e2e tools): `npm install`
 - Frontend lint: `npm run lint:frontend`
 - Format check: `npm run format:check`
