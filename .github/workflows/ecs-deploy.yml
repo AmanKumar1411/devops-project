@@ -1,0 +1,220 @@
+name: ECS Deploy Pipeline
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "terraform/**"
+      - "scripts/**"
+      - ".github/workflows/ecs-deploy.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "terraform/**"
+      - "scripts/**"
+      - ".github/workflows/ecs-deploy.yml"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECS_CLUSTER_NAME: devops-cluster
+  BACKEND_SERVICE_NAME: backend-service
+  FRONTEND_SERVICE_NAME: frontend-service
+  BACKEND_REPOSITORY_NAME: devops-backend
+  FRONTEND_REPOSITORY_NAME: devops-frontend
+
+concurrency:
+  group: ecs-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Prepare test reports directory
+        run: mkdir -p test-results
+
+      - name: Run frontend lint
+        run: npm run lint:frontend
+
+      - name: Run format checks
+        run: npm run format:check
+
+      - name: Run backend unit tests (JSON report)
+        working-directory: backend
+        run: go test ./... -json | tee ../test-results/backend-go-test-report.json
+
+      - name: Run backend integration smoke test
+        run: bash scripts/test.sh | tee test-results/backend-integration.log
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.run_id }}
+          path: test-results/
+
+  terraform_apply:
+    name: Terraform Apply
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Upload Terraform plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.run_id }}
+          path: terraform/tfplan
+
+  build_and_push:
+    name: Docker Build And Push
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: terraform_apply
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve AWS account id
+        id: aws_account
+        run: echo "value=$(aws sts get-caller-identity --query Account --output text)" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure ECR repositories exist
+        run: |
+          set -euo pipefail
+          for repository in "$BACKEND_REPOSITORY_NAME" "$FRONTEND_REPOSITORY_NAME"; do
+            aws ecr describe-repositories --repository-names "$repository" >/dev/null 2>&1 || \
+              aws ecr create-repository --repository-name "$repository" >/dev/null
+          done
+
+      - name: Build and push backend image
+        env:
+          ACCOUNT_ID: ${{ steps.aws_account.outputs.value }}
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/amd64 \
+            -t ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_REPOSITORY_NAME}:latest \
+            -t ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_REPOSITORY_NAME}:${{ github.sha }} \
+            --push \
+            ./backend
+
+      - name: Build and push frontend image
+        env:
+          ACCOUNT_ID: ${{ steps.aws_account.outputs.value }}
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/amd64 \
+            -t ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_REPOSITORY_NAME}:latest \
+            -t ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_REPOSITORY_NAME}:${{ github.sha }} \
+            --push \
+            ./frontend
+
+  deploy_to_ecs:
+    name: Deploy To ECS
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: build_and_push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Force ECS rollout
+        run: |
+          set -euo pipefail
+          aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$BACKEND_SERVICE_NAME" --force-new-deployment >/dev/null
+          aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$FRONTEND_SERVICE_NAME" --force-new-deployment >/dev/null
+
+      - name: Wait for ECS services to become stable
+        run: |
+          set -euo pipefail
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER_NAME" --services "$BACKEND_SERVICE_NAME" "$FRONTEND_SERVICE_NAME"
+
+      - name: Verify ECS service health
+        run: |
+          set -euo pipefail
+
+          backend_running=$(aws ecs describe-services --cluster "$ECS_CLUSTER_NAME" --services "$BACKEND_SERVICE_NAME" --query 'services[0].runningCount' --output text)
+          backend_desired=$(aws ecs describe-services --cluster "$ECS_CLUSTER_NAME" --services "$BACKEND_SERVICE_NAME" --query 'services[0].desiredCount' --output text)
+
+          frontend_running=$(aws ecs describe-services --cluster "$ECS_CLUSTER_NAME" --services "$FRONTEND_SERVICE_NAME" --query 'services[0].runningCount' --output text)
+          frontend_desired=$(aws ecs describe-services --cluster "$ECS_CLUSTER_NAME" --services "$FRONTEND_SERVICE_NAME" --query 'services[0].desiredCount' --output text)
+
+          if [ "$backend_running" -lt 1 ] || [ "$backend_desired" -lt 1 ]; then
+            echo "Backend service is not healthy: running=$backend_running desired=$backend_desired"
+            exit 1
+          fi
+
+          if [ "$frontend_running" -lt 1 ] || [ "$frontend_desired" -lt 1 ]; then
+            echo "Frontend service is not healthy: running=$frontend_running desired=$frontend_desired"
+            exit 1
+          fi
+
+          echo "ECS deployment verified."

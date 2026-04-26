@@ -1,126 +1,159 @@
 # DevOps Project
 
-## Architecture
+## Overview
 
-- Backend: Go HTTP API serving `/api/hello`, `/api/health`, `/api/time`, `/api/products`, and `/api/echo`
-- Frontend: Responsive HTML/CSS/JS UI calling backend API from button action
-- CI/CD: GitHub Actions for quality gates, container image build, and EC2 deployment
-- Deployment target: AWS EC2 host pulling images from AWS ECR
+This repository contains:
 
-## Workflows
+- Backend: Go HTTP API (`backend/main.go`)
+- Frontend: static HTML/CSS/JS app (`frontend/`)
+- Infrastructure as Code: Terraform (`terraform/`)
+- CI/CD automation: GitHub Actions (`.github/workflows/`)
 
-### CI Quality Gate
+## Service Endpoints
+
+The backend currently exposes:
+
+- `/api/hello`
+- `/api/health`
+- `/api/time`
+- `/api/products`
+- `/api/echo`
+
+## Workflow Files
+
+### 1) CI Quality Gate
 
 File: `.github/workflows/ci.yml`
 
-Runs on both:
+Purpose:
 
-- `push`
-- `pull_request`
+- Run lint and format checks
+- Run backend unit tests
+- Run Playwright E2E tests
+- Run security scan job (Trivy)
 
-Checks:
+### 2) Release Build And Deploy (Legacy EC2 flow)
 
-- Install root dependencies (`npm install`)
-- Lint frontend (`eslint` frontend JS)
-- Format checks (`prettier --check`)
-- Backend tests (`go test`)
-- E2E bonus test (Playwright)
-
-### Container Build Workflows
-
-Files:
-
-- `.github/workflows/backend-ci.yml`
-- `.github/workflows/frontend-ci.yml`
+File: `.github/workflows/release.yml`
 
 Purpose:
 
-- Build multi-arch Docker images
-- Push tagged images to ECR
+- Build and push backend/frontend images to ECR
+- Deploy by SSH to an EC2 host
 
-### Deploy Workflow
+Note: This workflow is kept for backward compatibility.
 
-File: `.github/workflows/deploy-cd.yml`
+### 3) ECS Deploy Pipeline (New)
+
+File: `.github/workflows/ecs-deploy.yml`
 
 Purpose:
 
-- SSH to EC2
-- Pull latest backend/frontend images from ECR
-- Restart containers (`docker rm -f ... || true`, then `docker run`)
+- Run tests and upload test reports
+- Run Terraform init/validate/plan/apply
+- Build and push Docker images to ECR
+- Force ECS service rollout and verify stability
 
-## Frontend Design Decisions
+Execution order in this workflow:
 
-- Refactored into reusable functions in `frontend/app.js`
-- Separated structure and styling:
-  - `frontend/index.html`
-  - `frontend/styles.css`
-- Responsive card-based UI with mobile-friendly spacing and typography
-- Keeps direct API integration to backend endpoint
+1. `tests`
+2. `terraform_apply`
+3. `build_and_push`
+4. `deploy_to_ecs`
 
-## Testing Strategy
+## Required GitHub Secrets
 
-### Backend Testing
+Configure these in repository settings:
 
-- Tool: Go test framework (`testing`, `httptest`)
-- Example: `backend/main_test.go`
-- Validates helper functions and API behavior for all routes
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_SESSION_TOKEN` (recommended for temporary credentials)
+- `AWS_REGION`
 
-### E2E Testing (Bonus)
+Additional secrets are required by the legacy EC2 release workflow (`release.yml`):
 
-- Tool: Playwright
-- Example: `tests/e2e/user-flow.spec.js`
-- User flow validated:
-  - Open frontend
-  - Click "Call Backend API"
-  - Verify rendered backend response
+- `EC2_SSH_KEY`
+- `EC2_USER`
+- `EC2_PUBLIC_IP`
+- `AWS_ACCOUNT_ID`
 
-## Linting / PR Checks
+## Terraform Notes
 
-- ESLint config:
-  - `backend/eslint.config.js`
-  - `eslint.config.js`
-- Prettier config:
-  - `.prettierrc`
-  - `backend/.prettierrc`
-- PR lint failure enforced through `.github/workflows/ci.yml`
+Main infra is defined in:
 
-## Dependabot
+- `terraform/main.tf`
+- `terraform/provider.tf`
 
-Config file: `.github/dependabot.yml`
+Current Terraform resources include:
 
-Configured updates:
+- S3 bucket with versioning, encryption, and public access block
+- ECR repository
+- ECS cluster, task definitions, and services
+- CloudWatch log group
+- IAM execution role and attachment
 
-- GitHub Actions dependencies
-- npm dependencies at root
-- npm dependencies for backend
+### About `variables.tf` and `outputs.tf`
 
-## Idempotent Script Practices
+Both files can be empty without breaking Terraform. They are optional.
 
-Hardened scripts:
+- Keep `variables.tf` when you want configurable inputs (region, names, subnet IDs, image URIs).
+- Keep `outputs.tf` when you want useful values printed after apply (bucket name, ECS cluster name, service ARNs).
 
-- `scripts/build.sh`
-- `scripts/test.sh`
-- `scripts/check-aws.sh`
-- `scripts/docker-build.sh`
+If you are not using variables/outputs yet, empty files are not required and can be deleted safely.
 
-Improvements:
+## Local Development
 
-- `set -euo pipefail` for strict execution
-- Safe cleanup in test script with `trap`
-- Re-runnable behavior without inconsistent state
+### Prerequisites
 
-## Challenges and Tradeoffs
+- Go 1.22+
+- Node.js 20+
+- npm
 
-- Chose lightweight vanilla frontend (instead of React) to keep deployment simple and fast.
-- Added testable backend structure (`app.js` + `server.js`) to support unit/integration tests without changing runtime behavior.
-- Kept existing AWS deployment workflow and image pipelines while adding a separate quality-gate CI to satisfy PR requirements.
+### Useful Commands
 
-## Local Commands
+Install root dependencies:
 
-- Backend dependencies: `go mod tidy` (inside `backend`)
-- Backend run: `go run ./backend`
-- Backend tests: `go test ./...` (inside `backend`)
-- Root install (frontend lint/e2e tools): `npm install`
-- Frontend lint: `npm run lint:frontend`
-- Format check: `npm run format:check`
-- E2E tests: `npm run test:e2e`
+```bash
+npm install
+```
+
+Run backend locally:
+
+```bash
+go run ./backend
+```
+
+Run backend tests:
+
+```bash
+cd backend && go test ./...
+```
+
+Run frontend lint:
+
+```bash
+npm run lint:frontend
+```
+
+Run formatting checks:
+
+```bash
+npm run format:check
+```
+
+Run E2E tests:
+
+```bash
+npm run test:e2e
+```
+
+Run backend smoke script:
+
+```bash
+bash scripts/test.sh
+```
+
+## Repository Hygiene
+
+- Ignore rules were updated in `.gitignore`, `backend/.dockerignore`, and `frontend/.dockerignore`.
+- Terraform local/state artifacts should remain untracked.

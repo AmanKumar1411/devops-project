@@ -3,8 +3,15 @@ tests
 *.md
 *_test.go
 *.log
+.env
+.env.*
+coverage
+test-results
+playwright-report
+.cache
 .DS_Store
 .vscode
+.idea
 .git
 .gitignore
 Dockerfile

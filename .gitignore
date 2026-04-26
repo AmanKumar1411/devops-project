@@ -40,3 +40,16 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Terraform local state and cache
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

@@ -19,5 +19,11 @@ WORKDIR /app
 COPY --from=builder /out/backend-service /app/backend-service
 
 EXPOSE 3000
+
 USER nonroot:nonroot
+
+# HEALTHCHECK
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+  CMD ["/app/backend-service"]
+
 ENTRYPOINT ["/app/backend-service"]

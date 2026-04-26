@@ -5,3 +5,7 @@ COPY styles.css /usr/share/nginx/html/styles.css
 COPY app.js /usr/share/nginx/html/app.js
 
 EXPOSE 80
+
+# HEALTHCHECK
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
