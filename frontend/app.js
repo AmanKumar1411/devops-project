@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = "http://localhost:3000";
+const DEFAULT_API_BASE_URL = "";
 const REFRESH_INTERVAL_MS = 10_000;
 
 function nowLabel() {

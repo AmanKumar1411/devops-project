@@ -1,0 +1,18 @@
+services:
+  backend:
+    container_name: devops-backend-local
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT:-3000}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    init: true
+    command: []
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
