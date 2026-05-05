@@ -120,19 +120,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: terraform-plan-${{ github.run_id }}
+          name: terraform-plan-${{ github.run_id }}-${{ github.run_attempt }}
           path: terraform/tfplan
 
       - name: Terraform apply (only on main)
         if: github.ref == 'refs/heads/main'
         run: terraform apply -input=false -auto-approve tfplan
-
-      - name: Upload Terraform plan
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-${{ github.run_id }}
-          path: terraform/tfplan
 
   build_and_push:
     name: Docker Build And Push
