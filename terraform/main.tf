@@ -169,3 +169,4 @@ resource "aws_ecs_service" "frontend_service" {
     aws_iam_role_policy_attachment.ecs_task_execution_policy
   ]
 }
+

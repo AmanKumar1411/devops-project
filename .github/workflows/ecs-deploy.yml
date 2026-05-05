@@ -97,8 +97,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform init
-        run: terraform init -input=false
+      - name: Terraform init (configure S3 backend)
+        env:
+          TF_STATE_BUCKET: terraform-state-aman-2026
+          TF_STATE_KEY: devops/terraform.tfstate
+          TF_DYNAMODB_TABLE: terraform-locks
+        run: |
+          terraform init -reconfigure \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=${TF_STATE_KEY}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${TF_DYNAMODB_TABLE}" \
+            -input=false
 
       - name: Terraform validate
         run: terraform validate
@@ -106,7 +116,15 @@ jobs:
       - name: Terraform plan
         run: terraform plan -input=false -out=tfplan
 
-      - name: Terraform apply
+      - name: Upload Terraform plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.run_id }}
+          path: terraform/tfplan
+
+      - name: Terraform apply (only on main)
+        if: github.ref == 'refs/heads/main'
         run: terraform apply -input=false -auto-approve tfplan
 
       - name: Upload Terraform plan
